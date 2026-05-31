@@ -1,123 +1,95 @@
 # 📊 California Housing — Complete Plot Reference Guide
+
 ## For use in PPTX / Essay presentations
 
 ---
 
 ## How to use this guide
+
 Each row maps a **plot file → slide description → what to say**.  
-Run notebooks 03→06 in order; all plots are saved to `outputs/`.
+Run notebooks in order (01 → 02 → 03 → 04); all plots save to `data/visualize/`.
 
 ---
 
-## NOTEBOOK 03 · Feature Engineering & Advanced EDA
-> *Theme for slides: "Understanding the Data"*
+## NOTEBOOK 03 · Rich Data Analysis
+
+> *Theme for slides: "Understanding the Data the Model Was Trained On"*
 
 | # | File | Slide Title Suggestion | What the plot shows | Key thing to say |
 |---|------|------------------------|---------------------|------------------|
-| 03-1 | `plot03_01_derived_distributions.png` | Engineered Feature Distributions | Histograms of rooms/household, bedroom ratio, population density | Raw counts are misleading — per-household ratios reveal true density |
-| 03-2 | `plot03_02_full_correlation_heatmap.png` | Full Feature Correlation Matrix | Heatmap of all pairwise Pearson correlations | `median_income` has the highest correlation (~0.69) with house value; `bedrooms_per_room` shows useful negative signal |
-| 03-3 | `plot03_03_target_correlations.png` | Feature Ranking: Correlation with Price | Sorted bar chart of each feature's correlation with target | Clean, simple justification for which features to prioritise in modelling |
-| 03-4 | `plot03_04_value_by_income_category.png` | Income → Price: Strong Monotonic Link | Boxplots of house value across 5 income tiers | Every income tier occupies a distinct price band — income is the dominant predictor |
-| 03-5 | `plot03_05_features_by_ocean_proximity.png` | Feature Profiles by Location | 6-panel boxplot grid split by ocean proximity | Island and near-bay areas are statistical outliers in nearly every dimension |
-| 03-6 | `plot03_06_pairplot_income.png` | Multivariate View: Income Colour-Coded | Scatter matrix of 5 key features, hue = income tier | Shows multivariate cluster separation — higher income groups occupy distinct regions of feature space |
-| 03-7 | `plot03_07_rooms_vs_value.png` | More Rooms → Higher Value? | Scatter of rooms/household vs house value with regression line | Positive trend confirmed (r≈0.15 after outlier removal); income colours show confounding effect |
-| 03-8 | `plot03_08_age_violin.png` | Housing Age by Location | Violin plot of housing age across proximity categories | Coastal / island areas have older housing stock — could reflect historical development patterns |
-| 03-9 | `plot03_09_stacked_bar_income_proximity.png` | Where Do Rich Districts Live? | Stacked bar of ocean proximity composition per income tier | Higher income categories are disproportionately found near water — geography and affluence correlate |
-| 03-10 | `plot03_10_hexbin_income_value.png` | The Core Relationship: Income vs Price | Density hexbin of income vs house value | Shows ~20,000 districts; hard $500K price ceiling is a clear artefact in the dataset |
+| 03-1 | `plot03_01_missing_values.png` | Missing Data: Only One Column Affected | Heatmap + bar of NaN locations | Only `total_bedrooms` has missing values (~207 rows, <1%); solution: drop those rows |
+| 03-2 | `plot03_02_target_distribution.png` | The Target Variable: Right-Skewed with a Hard Ceiling | Histogram before and after ÷100 000 scaling | ~4% of districts hit the $500K hard cap — this artefact directly causes under-prediction in expensive regions |
+| 03-3 | `plot03_03_feature_distributions.png` | All 8 Input Features: Highly Skewed | Histogram + KDE for all 8 numeric features | Count-based features (total_rooms, population) are heavily right-skewed — this is why StandardScaler is essential before feeding them to the MLP |
+| 03-4 | `plot03_04_scaler_effect.png` | StandardScaler: Levelling the Playing Field | Before vs after scaling (mean and std per feature) | Without scaling, large-magnitude features (total_rooms ~2600 avg) would dominate gradient updates; after scaling all features have mean≈0, std≈1 |
+| 03-5 | `plot03_05_correlation_matrix.png` | Feature Correlations: Income Dominates | Pearson correlation heatmap of 8 features + target | `median_income` r=0.69 is the single strongest predictor; the four count features (rooms/bedrooms/population/households) are all highly correlated with each other |
+| 03-6 | `plot03_06_target_correlations.png` | Which Features Matter Most? | Sorted bar of Pearson r with target | `median_income` is far ahead; `latitude` and `longitude` together encode the geographic price premium; count features contribute little |
+| 03-7 | `plot03_07_feature_vs_target_scatter.png` | Every Feature vs House Value | 8 scatter panels, one per feature | The $500K ceiling appears as a horizontal band in every plot — it distorts the relationship every feature has with the target |
+| 03-8 | `plot03_08_hexbin_income_value.png` | The Core Relationship: Income → Price | Density hexbin of median_income vs house value | The strongest single predictor; the hard ceiling at $500K is unmistakable as a flat horizontal band of dense points |
+| 03-9 | `plot03_09_ocean_proximity.png` | Ocean Proximity: Class Imbalance + Price Gap | Count bar + price boxplot side by side | INLAND = 43% of data; ISLAND < 1%; each category has a distinct price profile that the 5 one-hot columns encode for the MLP |
+| 03-10 | `plot03_10_onehot_mean_values.png` | What Each One-Hot Column Signals | Mean house value when each dummy = 1 vs 0 | The 5 binary columns carry very different average price signals — e.g. NEAR BAY average ~$260K vs INLAND ~$125K |
+| 03-11 | `plot03_11_geo_price_map.png` | California Price Map | Geographic scatter coloured by value, sized by population | Bay Area (~37-38°N) and LA (~34°N) are the high-price clusters — this spatial structure is what `latitude` and `longitude` encode |
+| 03-12 | `plot03_12_standardised_boxplots.png` | Outliers Survive Scaling | Box plots of all features after StandardScaler | Count features still have extreme outliers (>10 std) after scaling — these become extreme MLP inputs that can harm training stability |
+| 03-13 | `plot03_13_train_test_distributions.png` | Train/Test Split Is Representative | KDE of income and price for train vs test | Both distributions overlap tightly — the 80/20 random split (random_state=42) is fair and test evaluation is valid |
 
 ---
 
-## NOTEBOOK 04 · Statistical Analysis & Geographic Clustering
-> *Theme for slides: "What the Data Tells Us Statistically"*
+## NOTEBOOK 04 · Statistical Analysis of Training Data
+> *Theme for slides: "Statistical Properties That Explain Model Behaviour"*
 
 | # | File | Slide Title Suggestion | What the plot shows | Key thing to say |
 |---|------|------------------------|---------------------|------------------|
-| 04-1 | `plot04_01_iqr_outliers.png` | Outlier Prevalence by Feature | Horizontal bar of IQR-detected outlier % per feature | `population_per_household` has ~25% of rows as outliers — some districts are extreme communal housing or resort areas |
-| 04-2 | `plot04_02_zscore_outlier_map.png` | Where Are the Price Outliers? | California map with extreme-price districts highlighted in red | Price outliers (~1%) are spatially concentrated in Bay Area and LA coastal zones |
-| 04-3 | `plot04_03_distribution_fitting.png` | House Values Follow a Log-Normal | Histogram overlaid with Normal and Log-Normal fits | Log-normal fits data far better — implies percentage changes in price matter more than absolute amounts |
-| 04-4 | `plot04_04_qq_plots.png` | Q-Q: Log Transform Improves Normality | Q-Q plots before and after log transform | Original distribution deviates heavily from normal (S-curve); log transform substantially improves this |
-| 04-5 | `plot04_05_geo_clusters.png` | 6 Regional Housing Markets | California map with KMeans geographic clusters and mean prices | Distinct regional markets emerge: Bay Area, LA, San Diego, Central Valley, etc. |
-| 04-6 | `plot04_06_price_heatmap_grid.png` | The California Price Map | Grid heatmap coloured by mean house value | Instantly shows that coastal / urban areas command premiums; inland valleys are uniformly lower-priced |
-| 04-7 | `plot04_07_anova_ocean_proximity.png` | Location Proximity Differences Are Statistically Real | Violin plot + ANOVA test result | F-statistic and p-value confirm location price differences are not random; ANOVA p << 0.001 |
-| 04-8 | `plot04_08_cluster_radar.png` | Regional Cluster Profiles | Spider/radar chart of normalised feature means per cluster | Each cluster has a unique "fingerprint" — e.g. cluster with highest price also has highest income and lowest population density |
-| 04-9 | `plot04_09_age_cohort_analysis.png` | Age Doesn't Drive Price — Location Does | Bar + box of price by housing age cohort | 30–40 year old housing is often more expensive than newer stock due to location (e.g., San Francisco older homes) |
-| 04-10 | `plot04_10_elbow_kmeans.png` | Choosing 6 Clusters: The Elbow Method | WCSS vs k plot | The elbow at k≈5-6 validates our choice; beyond k=6, additional clusters add minimal explanatory value |
+| 04-1 | `plot04_01_distribution_fitting.png` | House Values Follow a Log-Normal Distribution | Histogram with Normal and Log-Normal PDF fits | Log-normal fits the data much better; MSE loss treats over- and under-prediction symmetrically but the target is not symmetric — this mismatch affects training |
+| 04-2 | `plot04_02_qq_plots.png` | The Target Is Not Normal | Q-Q plots before and after log transform | The flat right tail in the original Q-Q plot IS the $500K cap; log transform fixes most of the non-normality |
+| 04-3 | `plot04_03_price_cap_analysis.png` | The $500K Cap: A Systematic Bias in the Data | 3-panel: histogram with cap zone, count per category, % per category | NEAR BAY and NEAR OCEAN categories have the highest proportion of capped districts — directly explains why the model under-predicts coastal homes |
+| 04-4 | `plot04_04_capped_geo_map.png` | Capped Districts Are Clustered Geographically | California map: red = capped (≥$500K), blue = normal | Capped districts concentrate in Bay Area and LA — matching the regional under-prediction pattern found in the evaluation notebook |
+| 04-5 | `plot04_05_anova_ocean_proximity.png` | Location Categories Are Statistically Distinct | Violin plot + ANOVA F-stat and p-value | F-statistic is very large, p << 0.001 — the five ocean proximity groups have genuinely different price distributions, not just noise; justifies using them as features |
+| 04-6 | `plot04_06_iqr_outliers.png` | High Outlier Rate in Count Features | Bar of IQR outlier % per feature | `total_rooms`, `population`, `households` have 20-30% of rows as IQR outliers — the MLP receives extreme input values even after scaling |
+| 04-7 | `plot04_07_features_by_proximity.png` | How Each Feature Differs Across Regions | 8-panel box plots split by ocean proximity | Shows what the one-hot columns help the MLP discriminate — ISLAND and NEAR BAY districts have distinct feature profiles in nearly every dimension |
+| 04-8 | `plot04_08_price_heatmap_grid.png` | California's Non-Linear Price Surface | Grid heatmap coloured by mean price per lat/lon bin | The price surface is highly non-linear and spatially concentrated — a single linear layer could never capture this, justifying the deep 3-layer MLP architecture |
+| 04-9 | `plot04_09_lat_lon_price_profile.png` | Two Price Peaks Along Latitude | Mean price along latitude and longitude separately | Two distinct peaks along latitude (~34°N LA and ~37-38°N Bay Area); the model must learn this non-linear curve using only the raw coordinate as input |
+| 04-10 | `plot04_10_descriptive_stats_heatmap.png` | Training Data: Before and After Scaling | Colour-coded stats table (original vs standardised) | After StandardScaler: every feature has mean≈0, std≈1 — the equal-scale input space is what allows SGD to converge stably |
+| 04-11 | `plot04_11_age_analysis.png` | Housing Age Has Weak Predictive Power | Histogram of age + mean price per age bin | r≈0.11 with price — age barely correlates with value because location effects dominate; a 40-year-old house in SF is worth more than a new one inland |
+| 04-12 | `plot04_12_multicollinearity_pairplot.png` | Four Features Say Nearly the Same Thing | Pairplot scatter matrix of the four count features | All four pairs have r > 0.9 — they are near-redundant inputs; the MLP's weights for these features will be unstable and interchangeable |
 
 ---
 
-## NOTEBOOK 05 · Model Training & Comparison
-> *Theme for slides: "Building and Comparing Prediction Models"*
-
-| # | File | Slide Title Suggestion | What the plot shows | Key thing to say |
-|---|------|------------------------|---------------------|------------------|
-| 05-1 | `plot05_01_model_comparison_metrics.png` | 7 Models, 3 Metrics | Three horizontal bar charts: RMSE, MAE, R² | Gradient Boosting and Random Forest clearly dominate; linear models plateau around R²=0.65 |
-| 05-2 | `plot05_02_cv_r2_errorbars.png` | Consistency Matters: Cross-Validation | CV R² with error bars (5-fold) | Ensemble models are not just better — they're also more consistent across data splits (smaller std) |
-| 05-3 | `plot05_03_time_vs_r2.png` | Accuracy vs Training Cost | Scatter: training time vs R², bubble = RMSE | Engineering trade-off slide: RF/GB take 10-30× longer but deliver ~20% better R² |
-| 05-4 | `plot05_04_regularisation_path.png` | Finding the Right Regularisation | RMSE vs α for Ridge and Lasso | Both converge on similar optimal range; Lasso's path drops faster, making feature selection implicit |
-| 05-5 | `plot05_05_dt_depth_tuning.png` | Overfitting in Plain Sight | Train vs test R² as tree depth increases | Classic textbook overfitting curve; gap between curves widens beyond depth 8-10 |
-| 05-6 | `plot05_06_learning_curves_rf.png` | Does More Data Help? | Learning curves for Random Forest | Converging curves suggest low bias; slight gap means model would still benefit from more training data |
-| 05-7 | `plot05_07_model_radar.png` | At-a-Glance Model Comparison | Radar chart of 4 metrics for all models | Visual executive summary — ensemble models fill the outer ring; linear models stay inner |
-| 05-8 | `plot05_08_performance_heatmap.png` | Model Scorecard | Colour-coded metric table | Data-dense single-slide summary for technical audiences; green = best, red = worst |
+## Total Plot Count: 25 plots across notebooks 03 and 04
 
 ---
 
-## NOTEBOOK 06 · Model Evaluation & Interpretability
-> *Theme for slides: "How Good Are Our Predictions — and Why?"*
+## Recommended Presentation Narrative Order
 
-| # | File | Slide Title Suggestion | What the plot shows | Key thing to say |
-|---|------|------------------------|---------------------|------------------|
-| 06-1 | `plot06_01_pred_vs_actual.png` | How Close Are Our Predictions? | Predicted vs actual for LR, RF, GB | RF/GB points hug the diagonal; LR under-predicts luxury homes — linear relationship assumption breaks down |
-| 06-2 | `plot06_02_residual_distributions.png` | Prediction Error Distributions | Residual histograms for three models | RF/GB residuals centred near $0 with much smaller spread; LR has systematic over/under-prediction |
-| 06-3 | `plot06_03_residuals_vs_predicted.png` | Does Error Grow with Price? | Residuals vs predicted value | Slight heteroscedasticity at very high prices — model is less confident for luxury-tier homes |
-| 06-4 | `plot06_04_geo_error_map.png` | Where Does the Model Struggle? | California map coloured by prediction error | Errors cluster in SF Bay Area and LA coastal zones — hyper-local market dynamics not fully captured |
-| 06-5 | `plot06_05_feature_importance.png` | What Drives the Prediction? (Trees) | Impurity-based importance for RF vs GB | Both models rank `median_income`, `latitude`, `longitude` as top 3 — income and geography dominate |
-| 06-6 | `plot06_06_permutation_importance.png` | Robust Feature Importance | Permutation importance on test set (RF) | More trustworthy than impurity importance — confirms income and coordinates are genuinely causal, not spurious |
-| 06-7 | `plot06_07_partial_dependence.png` | How Each Feature Affects Price | PDP for top 4 features | Income has a near-linear positive effect; latitude shows a sharp spike for Bay Area coordinates (~37-38°N) |
-| 06-8 | `plot06_08_error_by_bracket.png` | Error Is Highest for Expensive Homes | MAE per price bracket | $450K+ bracket MAE is ~2× the overall MAE — partly because the $500K cap distorts model learning |
-| 06-9 | `plot06_09_error_by_proximity.png` | Accuracy Varies by Location Type | MAE/Median AE per ocean proximity | Island districts (very few samples, n<10) have the highest error; near-bay districts are best predicted |
-| 06-10 | `plot06_10_cumulative_error.png` | 80% of Predictions Within $50K | Cumulative error distribution for all models | Business-friendly framing: "Our best model predicts within $50K for 80% of all California census districts" |
-| 06-11 | `plot06_11_lr_coefficients.png` | What Does Linear Regression Learn? | Bootstrapped LR coefficients ± 95% CI | `median_income` largest positive coefficient; `bedrooms_per_room` negative (more bedrooms relative to rooms → lower value) |
-
----
-
-## Total Plot Count: 39 plots across 4 notebooks
-
-## Recommended Presentation Flow
 ```
 INTRO
-  └── Dataset overview (rows, features, target)
-  └── 03-10  Hexbin (income vs price — the core story)
+  └── 03-11  California Price Map (visual hook)
+  └── 03-2   Target distribution + $500K cap (sets up the core problem)
 
-EDA
-  └── 04-6   Price heatmap (California geography)
-  └── 03-4   Value by income category (boxes)
-  └── 03-2   Correlation heatmap
-  └── 04-3   Distribution fitting (log-normal)
+DATA OVERVIEW
+  └── 03-1   Missing values (preprocessing justification)
+  └── 03-3   Feature distributions (skewness → why scaling needed)
+  └── 03-4   StandardScaler effect (preprocessing payoff)
 
-FEATURE ENGINEERING
-  └── 03-1   Derived feature distributions
-  └── 03-3   Feature importance bar (pre-model)
-  └── 03-5   Features by ocean proximity
+FEATURE ANALYSIS
+  └── 03-6   Correlation bar (which features matter)
+  └── 03-8   Income vs price hexbin (strongest signal)
+  └── 03-5   Correlation matrix (full picture + multicollinearity)
+  └── 03-9   Ocean proximity (class imbalance + price gap)
+  └── 03-10  One-hot mean values (what the dummy columns encode)
 
-STATISTICAL INSIGHTS
-  └── 04-5   Geographic clusters map
-  └── 04-8   Cluster radar
-  └── 04-7   ANOVA (location groups differ statistically)
+STATISTICAL DEPTH
+  └── 04-1   Distribution fitting (log-normal nature)
+  └── 04-5   ANOVA (location groups are real, not noise)
+  └── 04-8   Price heatmap (non-linear surface → justifies deep MLP)
+  └── 04-9   Lat/lon price profiles (two geographic peaks)
+  └── 04-12  Multicollinearity pairplot (redundant inputs)
 
-MODELLING
-  └── 05-1   Model comparison (3 metrics)
-  └── 05-5   Overfitting curve (DT depth)
-  └── 05-6   Learning curves (RF)
-  └── 05-8   Performance scorecard heatmap
+THE $500K PROBLEM (connects EDA → evaluation findings)
+  └── 04-3   Cap analysis (3-panel: where, how many, which category)
+  └── 04-4   Capped districts map (geographic concentration)
+  └── 03-7   Feature vs target scatter (cap visible in every feature)
 
-RESULTS & INTERPRETATION
-  └── 06-1   Predicted vs Actual (3 models)
-  └── 06-5   Feature importance (RF vs GB)
-  └── 06-7   Partial dependence (top 4)
-  └── 06-10  Cumulative error (business slide)
-  └── 06-4   Geographic error map
-
-CONCLUSION
-  └── 05-7   Model radar (summary)
-  └── Key numbers: best model R², RMSE, % within $50K
+DATA QUALITY WRAP-UP
+  └── 03-12  Standardised boxplots (outliers survive scaling)
+  └── 03-13  Train/test split check (evaluation is fair)
+  └── 04-11  Age analysis (weak feature — shows not all features are equal)
 ```
